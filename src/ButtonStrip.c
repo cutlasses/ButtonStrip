@@ -80,23 +80,26 @@ void main()
             if( i == 0 )
             {
                 // turn first bit on, and shift down
-                PORTCbits.RC5 = 1;   // DATA
+                PORTCbits.RC5   = 1;      // DATA
             }
             else
             {
                 // then turn it off
-                PORTCbits.RC5 = 0;  // DATA
+                PORTCbits.RC5   = 0;      // DATA
             }
-            
-            PORTCbits.RC2 = led_values[i]; // set RC2 high to turn on LEDs (sinking current through the transistor)
-            
-            PORTCbits.RC3 = 0;      // SHIFT CLOCK
-            PORTCbits.RC3 = 1;      // SHIFT CLOCK
+                        
+            PORTCbits.RC3       = 0;      // SHIFT CLOCK
+            PORTCbits.RC3       = 1;      // SHIFT CLOCK
        
-            PORTCbits.RC4 = 0;      // STORE CLOCK
-            PORTCbits.RC4 = 1;      // STORE CLOCK
-       
-            __delay_ms(100);
+            PORTCbits.RC4       = 0;      // STORE CLOCK
+            PORTCbits.RC4       = 1;      // STORE CLOCK
+ 
+            switch_values[i]    = PORTAbits.RA5;
+            
+            //PORTCbits.RC2       = led_values[i]; // set RC2 high to turn on LEDs (sinking current through the transistor)
+            PORTCbits.RC2       = switch_values[i];
+
+            __delay_ms(1);
         }
 	}
 }

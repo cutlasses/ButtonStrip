@@ -21,7 +21,7 @@
 #pragma config BORV = LO        // Brown-out Reset Voltage Selection (Brown-out Reset Voltage (Vbor), low trip point selected.)
 #pragma config LVP = OFF        // Low-Voltage Programming Enable (High-voltage on MCLR/VPP must be used for programming)
 
-#define I2C_ADDRESS 222
+#define I2C_ADDRESS 0x01
 //#define DATA_SIZE_BYTES 2
 //#define DATA_SIZE_WORDS 1
 
@@ -30,8 +30,8 @@
 
 typedef unsigned char byte;
 
-byte led_values;
-byte switch_values;
+volatile byte led_values;
+volatile byte switch_values;
 
 void init_PIC()
 {
@@ -70,6 +70,8 @@ void interrupt ISR(void)
             {      
                 // send the switch values
                 SSP1BUF = switch_values;
+                //static byte count = 0;
+                //SSP1BUF = count++;
             }
             else
             {
@@ -82,10 +84,10 @@ void interrupt ISR(void)
         {
             if( SSP1STATbits.R_nW ) // MASTER IS READING FROM SLAVE
             {
-                // send the switch values
                 SSP1CON1bits.WCOL = 0; // clear write collision bit
                 
-                SSP1BUF = switch_values;
+                //SSP1BUF = switch_values;
+                SSP1BUF = 0b10101010; // shouldn't reach here - send a debug bitmask
             }
             else // MASTER IS WRITING TO SLAVE
             {                                              
@@ -139,6 +141,9 @@ void main()
     
 	while(1) 
 	{
+        switch_values = 0;
+        led_values = 0;
+        
         for( int i = 0; i < NUM_LED_SWITCHES; ++i )
         {
             if( i == 0 )
@@ -157,21 +162,21 @@ void main()
        
             PORTCbits.RC4       = 0;      // STORE CLOCK
             PORTCbits.RC4       = 1;      // STORE CLOCK
- 
+            
             //switch_values[i]    = PORTAbits.RA5;
             if( PORTAbits.RA5 )
             {
-                switch_values   |= (PORTAbits.RA5 << i);
+                switch_values   |= (1 << i);
             }
             else
             {
-                switch_values   &= ~(PORTAbits.RA5 << i);
+                switch_values   &= ~(1 << i);
             }
             
             led_values          = switch_values; // temp - set led on when switch is on
             //PORTCbits.RC2       = led_values[i]; // set RC2 high to turn on LEDs (sinking current through the transistor)
             
-            if( led_values & (PORTAbits.RA5 << i) )
+            if( led_values & (1 << i) )
             {
                 PORTCbits.RC2   = 1; // set RC2 high to turn on LEDs (sinking current through the transistor)
             }

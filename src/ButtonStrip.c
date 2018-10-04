@@ -92,7 +92,7 @@ void interrupt ISR(void)
             else // MASTER IS WRITING TO SLAVE
             {                                              
                 // read the led values
-                //led_values = SSP1BUF;
+                led_values = SSP1BUF;
             }
         }
         
@@ -141,8 +141,7 @@ void main()
     
 	while(1) 
 	{
-        switch_values = 0;
-        led_values = 0;
+        byte local_switch_values = 0;
         
         for( int i = 0; i < NUM_LED_SWITCHES; ++i )
         {
@@ -163,20 +162,17 @@ void main()
             PORTCbits.RC4       = 0;      // STORE CLOCK
             PORTCbits.RC4       = 1;      // STORE CLOCK
             
-            //switch_values[i]    = PORTAbits.RA5;
+            byte bit_on         = 1 << i;
             if( PORTAbits.RA5 )
             {
-                switch_values   |= (1 << i);
+                local_switch_values   |= bit_on;
             }
             else
             {
-                switch_values   &= ~(1 << i);
+                local_switch_values   &= ~bit_on;
             }
-            
-            led_values          = switch_values; // temp - set led on when switch is on
-            //PORTCbits.RC2       = led_values[i]; // set RC2 high to turn on LEDs (sinking current through the transistor)
-            
-            if( led_values & (1 << i) )
+                        
+            if( led_values & bit_on )
             {
                 PORTCbits.RC2   = 1; // set RC2 high to turn on LEDs (sinking current through the transistor)
             }
@@ -185,8 +181,10 @@ void main()
                 PORTCbits.RC2    = 0; // set RC2 low to turn off LEDs (transistor will not conduct)
             }
 
-            __delay_ms(1);
+            //__delay_ms(1);
         }
+        
+        switch_values = local_switch_values; // set switch values once all have been read
 	}
 }
 

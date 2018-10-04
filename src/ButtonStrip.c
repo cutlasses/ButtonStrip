@@ -30,8 +30,8 @@
 
 typedef unsigned char byte;
 
-volatile byte led_values;
-volatile byte switch_values;
+volatile byte led_values = 0;
+volatile byte switch_values = 0;
 
 void init_PIC()
 {
@@ -141,7 +141,8 @@ void main()
     
 	while(1) 
 	{
-        byte local_switch_values = 0;
+        byte buffered_switch_values = 0;
+        byte buffered_led_values = led_values;
         
         for( int i = 0; i < NUM_LED_SWITCHES; ++i )
         {
@@ -165,26 +166,26 @@ void main()
             byte bit_on         = 1 << i;
             if( PORTAbits.RA5 )
             {
-                local_switch_values   |= bit_on;
+                buffered_switch_values   |= bit_on;
             }
             else
             {
-                local_switch_values   &= ~bit_on;
+                buffered_switch_values   &= ~bit_on;
             }
                         
-            if( led_values & bit_on )
+            if( buffered_led_values & bit_on )
             {
                 PORTCbits.RC2   = 1; // set RC2 high to turn on LEDs (sinking current through the transistor)
             }
             else
             {
-                PORTCbits.RC2    = 0; // set RC2 low to turn off LEDs (transistor will not conduct)
+                PORTCbits.RC2   = 0; // set RC2 low to turn off LEDs (transistor will not conduct)
             }
 
-            //__delay_ms(1);
+            __delay_ms(1);
         }
         
-        switch_values = local_switch_values; // set switch values once all have been read
+        switch_values = buffered_switch_values; // set switch values once all have been read
 	}
 }
 

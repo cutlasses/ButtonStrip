@@ -146,6 +146,8 @@ void main()
         
         for( int i = 0; i < NUM_LED_SWITCHES; ++i )
         {
+            PORTCbits.RC2       = 0;      // turn the led off whilst shifting
+            
             if( i == 0 )
             {
                 // turn first bit on, and shift down
@@ -182,7 +184,7 @@ void main()
                 PORTCbits.RC2   = 0; // set RC2 low to turn off LEDs (transistor will not conduct)
             }
 
-            __delay_ms(1);
+            __delay_us(100);
         }
         
         switch_values = buffered_switch_values; // set switch values once all have been read

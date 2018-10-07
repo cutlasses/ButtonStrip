@@ -79,6 +79,8 @@ void loop()
 
   // write led values
   Wire.beginTransmission(I2C_ADDRESS);
+  //const uint8_t last_bit = 1 << 7;
+  //Wire.write(last_bit);
   Wire.write(led_values);
   Wire.endTransmission();
 }

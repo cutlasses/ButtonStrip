@@ -32,6 +32,7 @@ typedef unsigned char byte;
 
 volatile byte led_values = 0;
 volatile byte switch_values = 0;
+volatile byte additional_switch_values = 0;
 
 void init_PIC()
 {
@@ -39,13 +40,14 @@ void init_PIC()
 	OSCCON      = 0b01111010;
 
 	// configure io
-	TRISA       = 0b11111111;                    
+	TRISA       = 0b11111111;    // set all port A as input                
 	TRISC       = 0b11000011;    // set 5,4,3,2 as output         
-	ANSELA      = 0b11111111;
+	ANSELA      = 0;             // set all PORT A to digital
 	ANSELC      = 0;             // set all PORT C to digital
-
-	// timer0... configure source and prescaler
-	OPTION_REG  = 0b10000100;
+    
+	
+	OPTION_REG  = 0b00000100;    // timer0... configure source and prescaler (and allow pull ups)
+    WPUA        = 0b00010100;    // turn on pull ups 4,2
 
 	// turn off the ADC
 	ADCON1      = 0;
@@ -87,7 +89,8 @@ void interrupt ISR(void)
                 SSP1CON1bits.WCOL = 0; // clear write collision bit
                 
                 //SSP1BUF = switch_values;
-                SSP1BUF = 0b10101010; // shouldn't reach here - send a debug bitmask
+                //SSP1BUF = 0b10101010; // shouldn't reach here - send a debug bitmask
+                SSP1BUF = additional_switch_values;
             }
             else // MASTER IS WRITING TO SLAVE
             {                                              
@@ -144,6 +147,20 @@ void main()
         byte buffered_switch_values = 0;
         byte buffered_led_values = led_values;
         
+        // read the additional switches
+        additional_switch_values = 0;
+        if( !PORTAbits.RA4 )
+        {
+            // switch 1
+            additional_switch_values |= 0b00000001;
+        }
+        
+        if( !PORTAbits.RA2 )
+        {
+            // switch 2
+            additional_switch_values |= 0b00000010;
+        }
+        
         for( int i = 0; i < NUM_LED_SWITCHES; ++i )
         {
             PORTCbits.RC2       = 0;      // turn the led off whilst shifting
@@ -184,7 +201,7 @@ void main()
                 PORTCbits.RC2   = 0; // set RC2 low to turn off LEDs (transistor will not conduct)
             }
 
-            __delay_us(100);
+            //__delay_us(100);
         }
         
         switch_values = buffered_switch_values; // set switch values once all have been read
